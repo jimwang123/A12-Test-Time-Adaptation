@@ -1,0 +1,142 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{algorithm,algorithmic}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+
+\def\E{\mathbb{E}}
+\newcommand{\bx}{\mathbf{x}} 
+\newcommand{\by}{\mathbf{y}} 
+
+\usetheme{Madrid}
+\usecolortheme{beaver}
+
+\def\reals{\mathbb{R}}
+
+\begin{document}
+
+\begin{frame}{Deliverables for the proposal (for next quarter).}
+
+\Large 
+\begin{enumerate}
+\item A detailed document that outlines the problem, the related work and gap assessment and the approach.
+\item A detailed week by week schedule that includes the list of deliverables for each week.
+\item A 2-minute elevator pitch presentation that the TA will grade.
+\end{enumerate}
+
+\end{frame}
+
+\begin{frame}{Project Proposal for the next quarter}
+Recall Conjugate Pseudo-Labels:
+\Large 
+%\begin{minipage}{.5\textwidth}
+\begin{exampleblock}{}
+\begin{itemize}
+ \item Consider $\ell(\theta;y,x) = f( h_{\theta}(x) ) - y^\top h_{\theta}(x)$.  
+ \item Get pseudo-label $\hat{y}(x) = \nabla f( h_{\theta}(x) )$.
+ \item Construct Self-training loss function: $\ell(\theta;x):=f( h_{\theta}(x) ) - \hat{y}(x)^\top h_{\theta}(x)$.
+\end{itemize}
+\end{exampleblock}
+
+Their motivation:
+the optimiality condition of
+$h^{opt} \gets \arg\max_{h} \langle h, y \rangle - f(h)$ is known to satisfy $\nabla f(h^{opt})=y$.
+\end{frame}
+
+\begin{frame}{Project Proposal for the next quarter}
+
+\begin{exampleblock}{}
+\begin{itemize}
+ \item Consider $\ell(\theta;y,x) = f( h_{\theta}(x) ) - y^\top h_{\theta}(x)$.  
+ \item Get pseudo-label $\hat{y}(x) = \nabla f( h_{\theta}(x) )$.
+ \item Construct Self-training loss function: $\ell(\theta;x):=f( h_{\theta}(x) ) - \hat{y}(x)^\top h_{\theta}(x)$.
+\end{itemize}
+\end{exampleblock}
+
+
+\begin{block}{}
+\begin{itemize}
+ \item Consider $\ell(\theta;y,x) = f( h_{\theta}(x) ) - \phi( y, h_{\theta}(x))$.  
+ \item Optimize $\max_{h_{\theta}(x)} f( h_{\theta}(x) ) - \phi( y, h_{\theta}(x))$
+ to get the optimality condition $\psi( h_{\theta}(x) ) = y$.
+ \item Get pseudo-label $\hat{y}(x) = \psi( h_{\theta}(x) )$.
+ \item Construct Self-training loss function: $\ell(\theta;x):=f( h_{\theta}(x) ) - 
+\phi( \hat{y}(x), h_{\theta}(x))$.
+\end{itemize}
+\end{block}
+
+\end{frame}
+
+\begin{frame}[t]{Example: Polyloss}
+\begin{align}
+\ell_{\mathrm{poly}}(\theta;y,x) & = \underbrace{ \log \sum_j \exp\left( h_{\theta}(x)[j] \right) }_{=f(h_{\theta}(x))} - \phi( y, h_{\theta}(x)),
+%\begin{equation}
+\\ 
+\text{ where } \phi( y, h_{\theta}(x)) & = \langle  y,   h_{\theta}(x) - \epsilon (1_c- \mathrm{softmax}(h_{\theta}(x) )) \rangle
+\\ \text{ and } [\mathrm{softmax}(h_{\theta}(x) )]_i & = \frac{
+\exp \left( h_{\theta}(x)[i] \right)
+ }{ \sum_j \exp \left( h_{\theta}(x)[j] \right) }.
+%\end{equation}
+\end{align}
+
+%\pause
+
+\begin{block}{}
+Optimize $\max_{h_{\theta}(x)} f( h_{\theta}(x) ) - \phi( y, h_{\theta}(x))$
+ to get the optimality condition $\psi( h_{\theta}(x) ) = y$.
+\end{block}
+\end{frame}
+
+\begin{frame}{Design our own loss function}
+
+\begin{equation}
+\ell_{\mathrm{new}}(\theta;y,x)  = \underbrace{ \log \sum_j \exp\left( h_{\theta}(x)[j] \right) }_{=f(h_{\theta}(x))} -
+\underbrace{ y^\top A h_{\theta}(x) }_{
+ := \phi( y, h_{\theta}(x)) },
+\end{equation}
+where $A \in \reals^{c \times c} \succ 0$ is a certain matrix based on the source/target dataset. For example,
+\begin{equation}
+A := \left( \sum_{i=1}^n  \mathrm{softmax}(h_{\theta}(x) )) \mathrm{softmax}(h_{\theta}(x) ))^\top
++ \delta I_d \right)^{-1},
+\end{equation}
+where $\delta>0$.
+
+We can then derive the self-training loss function based on this new loss function.
+
+
+%\begin{block}{}
+%Optimize $\max_{h_{\theta}(x)} f( h_{\theta}(x) ) - \phi( y, h_{\theta}(x))$
+% to get the optimality condition $\psi( h_{\theta}(x) ) = y$ for constructing pseudo labels.
+%\end{block}
+
+\end{frame}
+
+
+\iffalse
+
+\begin{frame}[t]
+We get
+\begin{block}{}
+\begin{equation}
+\nabla f(h_{\theta}(x)) = \mathrm{softmax}(h_{\theta}(x) ) = y + \langle \epsilon y , \nabla_h \mathrm{softmax}(h_{\theta}(x) ) \rangle.
+\end{equation}
+\end{block}
+Therefore, 
+denote $C :=  \sum_j \exp \left( h_{\theta}(x)[j] \right)$, the $j$-element of the pseudo-label $\hat{y}$ would be
+\begin{equation}
+\hat{y}[j] = \frac{ \mathrm{softmax}(h_{\theta}(x) ) }{
+ 1 + \epsilon \left( \underbrace{ \exp \left( h_{\theta}(x)[j] \right) C^{-1} }_{=  \mathrm{softmax}(h_{\theta}(x) )} - \exp \left( h_{\theta}(x)[j] \right)^2 C^{-2}  \right) }.
+ %  \exp \left( h_{\theta}(x)[j] \right) } }.
+\end{equation}
+
+You could search for other loss functions, not necessarily limited to Poly-loss.
+
+
+\end{frame}
+
+\fi
+
+\end{document}
+
